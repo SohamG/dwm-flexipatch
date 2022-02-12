@@ -1,3 +1,5 @@
+#ifndef __SOHAMS_PATCHES
+#define __SOHAMS_PATCHES
 /*
  * This file contains patch control flags.
  *
@@ -116,7 +118,7 @@
 #define BAR_TAGGRID_PATCH 0
 
 /* Show status in bar */
-#define BAR_STATUS_PATCH 1
+#define BAR_STATUS_PATCH 0
 
 /* This patch adds a clickable button to the left hand side of the statusbar.
  * https://dwm.suckless.org/patches/statusbutton/
@@ -356,7 +358,7 @@
  * https://lists.suckless.org/hackers/2004/17285.html
  * https://dwm.suckless.org/patches/pango/
  */
-#define BAR_PANGO_PATCH 1
+#define BAR_PANGO_PATCH 0
 
 /* This patch allows the status text to be fixed to the bar on a specific
  * monitor rather than being drawn on the focused monitor.
@@ -910,7 +912,7 @@
  * with the fakefullscreenclient patch and offers no practical functionality without it.
  * https://dwm.suckless.org/patches/selectivefakefullscreen/
  */
-#define SELECTIVEFAKEFULLSCREEN_PATCH 0
+#define SELECTIVEFAKEFULLSCREEN_PATCH 1
 
 /* Allows restarting dwm without the dependency of an external script.
  * https://dwm.suckless.org/patches/selfrestart/
@@ -1298,3 +1300,4 @@
  * This can be optionally disabled in favour of other layouts.
  */
 #define MONOCLE_LAYOUT 1
+#endif

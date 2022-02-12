@@ -1,5 +1,5 @@
 /* See LICENSE file for copyright and license details. */
-
+#include "./patches.h"
 /* appearance */
 #if ROUNDED_CORNERS_PATCH
 static const unsigned int borderpx = 0; /* border pixel of windows */
@@ -119,11 +119,11 @@ static void (*bartabmonfns[])(Monitor *) = {NULL /* , customlayoutfn */};
 #endif // MONOCLE_LAYOUT
 #endif // BAR_TABGROUPS_PATCH
 #if BAR_PANGO_PATCH
-static const char font[] = "monospace 10";
+static const char font[] = "monospace:size=14";
 #else
-static const char *fonts[] = {"monospace:size=10"};
+static const char *fonts[] = {"monospace:size=10","Noto Color Emoji:pixelsize=10:antialias=true:autohint=true"};
 #endif // BAR_PANGO_PATCH
-static const char dmenufont[] = "monospace:size=10";
+static const char dmenufont[] = "Fira Code:size=14";
 
 static char c000000[] = "#000000"; // placeholder value
 
@@ -344,12 +344,13 @@ static const char *layoutmenu_cmd = "layoutmenu.sh";
 #if COOL_AUTOSTART_PATCH
 static const char *const autostart[] = {
     // "st", NULL,
+    /* "brave", NULL, */
     NULL /* terminate */
 };
 #endif // COOL_AUTOSTART_PATCH
 
 #if SCRATCHPADS_PATCH
-const char *spcmd1[] = {"st", "-n", "spterm", "-g", "120x34", NULL};
+const char *spcmd1[] = {"alacritty", "--class", "spterm", NULL};
 static Sp scratchpads[] = {
     /* name          cmd  */
     {"spterm", spcmd1},
@@ -423,21 +424,23 @@ static const int tagrows = 2;
  */
 static const Rule rules[] = {
     /* xprop(1):
-	 *	WM_CLASS(STRING) = instance, class
-	 *	WM_NAME(STRING) = title
-	 *	WM_WINDOW_ROLE(STRING) = role
-	 *	_NET_WM_WINDOW_TYPE(ATOM) = wintype
-	 */
+     *	WM_CLASS(STRING) = instance, class
+     *	WM_NAME(STRING) = title
+     *	WM_WINDOW_ROLE(STRING) = role
+     *	_NET_WM_WINDOW_TYPE(ATOM) = wintype
+     */
     RULE(.wintype = WTYPE "DIALOG", .isfloating = 1)
         RULE(.wintype = WTYPE "UTILITY", .isfloating = 1)
             RULE(.wintype = WTYPE "TOOLBAR", .isfloating = 1)
                 RULE(.wintype = WTYPE "SPLASH", .isfloating = 1)
                     RULE(.class = "Gimp", .tags = 1 << 4)
                         RULE(.class = "Firefox", .tags = 1 << 7)
-                        RULE(.class = "Zotero", .isfloating = 1)
-                        RULE(.class = "zoom", .isfloating = 1)
+                            RULE(.class = "Zotero", .isfloating = 1)
+                                RULE(.class = "zoom", .isfloating = 1)
+                                    RULE(.class = "keepassxc", .isfloating = 1)
+                                        RULE(.class = "discord", .tags = 1 << 1)
 #if SCRATCHPADS_PATCH
-                            RULE(.instance = "spterm", .tags = SPTAG(0), .isfloating = 1)
+                                            RULE(.instance = "spterm", .tags = SPTAG(0), .isfloating = 1)
 #endif // SCRATCHPADS_PATCH
 };
 
@@ -808,7 +811,7 @@ static const char *dmenucmd[] = {
     topbar ? NULL : "-b",
 #endif // BAR_DMENUMATCHTOP_PATCH
     NULL};
-static const char *termcmd[] = {"st", NULL};
+static const char *termcmd[] = {"kitty", NULL};
 
 #if BAR_STATUSCMD_PATCH
 #if BAR_DWMBLOCKS_PATCH
@@ -822,20 +825,25 @@ static const StatusCmd statuscmds[] = {
     {"notify-send Battery$BUTTON", 3},
 };
 /* test the above with: xsetroot -name "$(printf '\x01Volume |\x02 CPU |\x03 Battery')" */
-static const char *statuscmd[] = {"/bin/sh", "-c", NULL, NULL};
+static const char *statuscmd[] = {"", NULL};
 #endif // BAR_DWMBLOCKS_PATCH
 #endif // BAR_STATUSCMD_PATCH
 
 #if ON_EMPTY_KEYS_PATCH
 static const char *firefoxcmd[] = {"brave", NULL};
+static const char *slockcmd[] = {"slock", NULL};
+static const char *symcmd[] = {"/bin/sh","-c", "~/.local/bin/symbols", NULL};
 static Key on_empty_keys[] = {
     /* modifier key            function                argument */
     {0, XK_f, spawn, {.v = firefoxcmd}},
+    {0, XK_d, spawn, {.v = {"discord", NULL}}}
 };
 #endif // ON_EMPTY_KEYS_PATCH
 
 static Key keys[] = {
-/* modifier                     key            function                argument */
+    /* modifier                     key            function                argument */
+    {MODKEY | ShiftMask, XK_l, spawn, {.v = slockcmd}},
+    {MODKEY, XK_u, spawn, {.v = symcmd}},
 #if KEYMODES_PATCH
     {MODKEY, XK_Escape, setkeymode, {.ui = COMMANDMODE}},
 #endif // KEYMODES_PATCH
@@ -1141,7 +1149,7 @@ static Key keys[] = {
 #endif                                                                  // EXRESIZE_PATCH
 #if FLOATPOS_PATCH
     /* Note that due to key limitations the below example kybindings are defined with a Mod3Mask,
-	 * which is not always readily available. Refer to the patch wiki for more details. */
+     * which is not always readily available. Refer to the patch wiki for more details. */
     /* Client position is limited to monitor window area */
     {Mod3Mask, XK_u, floatpos, {.v = "-26x -26y"}},      // ↖
     {Mod3Mask, XK_i, floatpos, {.v = "  0x -26y"}},      // ↑
@@ -1266,15 +1274,15 @@ static Button buttons[] = {
 #endif // BAR_STATUSCMD_PATCH
 #if PLACEMOUSE_PATCH
     /* placemouse options, choose which feels more natural:
-	 *    0 - tiled position is relative to mouse cursor
-	 *    1 - tiled postiion is relative to window center
-	 *    2 - mouse pointer warps to window center
-	 *
-	 * The moveorplace uses movemouse or placemouse depending on the floating state
-	 * of the selected client. Set up individual keybindings for the two if you want
-	 * to control these separately (i.e. to retain the feature to move a tiled window
-	 * into a floating position).
-	 */
+     *    0 - tiled position is relative to mouse cursor
+     *    1 - tiled postiion is relative to window center
+     *    2 - mouse pointer warps to window center
+     *
+     * The moveorplace uses movemouse or placemouse depending on the floating state
+     * of the selected client. Set up individual keybindings for the two if you want
+     * to control these separately (i.e. to retain the feature to move a tiled window
+     * into a floating position).
+     */
     {ClkClientWin, MODKEY, Button1, moveorplace, {.i = 1}},
 #else
     {ClkClientWin, MODKEY, Button1, movemouse, {0}},
