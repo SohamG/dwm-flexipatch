@@ -613,6 +613,7 @@ typedef struct
 } MonitorRule;
 #endif // MONITOR_RULES_PATCH
 
+
 /* function declarations */
 static void applyrules(Client *c);
 static int applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact);

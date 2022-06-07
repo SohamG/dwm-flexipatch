@@ -15,9 +15,6 @@
    License along with the GNU C Library; if not, see
    <https://www.gnu.org/licenses/>.  */
 
-
-
-
 /* This header is separate from features.h so that the compiler can
    include it implicitly at the start of every compilation.  It must
    not itself include <features.h> or any other header that includes
@@ -40,18 +37,21 @@
    - 285 hentaigana
    - 3 additional Zanabazar Square characters */
 
-
-
-
 /* See LICENSE file for copyright and license details. */
-
 
 /* appearance */
 
+#include <X11/XF86keysym.h>
 #include "patches.h"
 
 #define ICONSIZE 20   /* icon size */
 #define ICONSPACING 5 /* space between icon and title */
+
+#define SPWN(x) {.v = x}
+
+#define STATUSBAR "dwmblocks"
+/* helper for spawning shell commands in the pre dwm-5.0 fashion */
+#define SHCMD(cmd) { .v = (const char*[]){ "/bin/sh", "-c", cmd, NULL } }
 
 static const unsigned int borderpx = 1; /* border pixel of windows */
 
@@ -70,22 +70,12 @@ static const int topbar = 1; /* 0 means bottom bar */
 
 /* Status is to be shown on: -1 (all monitors), 0 (a specific monitor by index), 'A' (active monitor) */
 
-
-
-
-
 static const int statusmon = 'A';
-
-
-
-
-
 
 static const char buttonbar[] = "<O>";
 
-
 static const unsigned int systrayspacing = 2; /* systray spacing */
-static const int showsystray = 1; /* 0 means no systray */
+static const int showsystray = 1;             /* 0 means no systray */
 
 /* Indicators: see patch/bar_indicators.h for options */
 static int tagindicatortype = INDICATOR_TOP_LEFT_SQUARE;
@@ -95,63 +85,63 @@ static int floatindicatortype = INDICATOR_TOP_LEFT_SQUARE;
 static int fakefsindicatortype = INDICATOR_PLUS;
 static int floatfakefsindicatortype = INDICATOR_PLUS_AND_LARGER_SQUARE;
 
-static const char *fonts[] = {"monospace:size=10","Noto Color Emoji:pixelsize=10:antialias=true:autohint=true"};
+static const char *fonts[] = {"monospace:size=10", "Noto Color Emoji:pixelsize=15:antialias=true:autohint=true"};
 
 // static const char dmenufont[] = "Fira Code:size=14";
 
 static char c000000[] = "#000000"; // placeholder value
 
+static char normfgcolor[] = "#44475a"; 
+static char normbgcolor[] = "#222222"; 
+static char normbordercolor[] = "#444444"; 
+static char normfloatcolor[] = "#db8fd9"; 
 
+static char selfgcolor[] = "#eeeeee"; 
+static char selbgcolor[] = "#005577"; 
+static char selbordercolor[] = "#005577"; 
+static char selfloatcolor[] = "#005577"; 
 
-static char normfgcolor[] = "#bbbbbb";
-static char normbgcolor[] = "#222222";
-static char normbordercolor[] = "#444444";
-static char normfloatcolor[] = "#db8fd9";
+static char titlenormfgcolor[] = "#bbbbbb"; 
+static char titlenormbgcolor[] = "#222222"; 
+static char titlenormbordercolor[] = "#444444"; 
+static char titlenormfloatcolor[] = "#db8fd9"; 
 
-static char selfgcolor[] = "#eeeeee";
-static char selbgcolor[] = "#005577";
-static char selbordercolor[] = "#005577";
-static char selfloatcolor[] = "#005577";
+static char titleselfgcolor[] = "#eeeeee"; 
+static char titleselbgcolor[] = "#005577"; 
+static char titleselbordercolor[] = "#005577"; 
+static char titleselfloatcolor[] = "#005577"; 
 
-static char titlenormfgcolor[] = "#bbbbbb";
-static char titlenormbgcolor[] = "#222222";
-static char titlenormbordercolor[] = "#444444";
-static char titlenormfloatcolor[] = "#db8fd9";
+static char tagsnormfgcolor[] = "#bbbbbb"; 
+static char tagsnormbgcolor[] = "#222222"; 
+static char tagsnormbordercolor[] = "#444444"; 
+static char tagsnormfloatcolor[] = "#db8fd9"; 
 
-static char titleselfgcolor[] = "#eeeeee";
-static char titleselbgcolor[] = "#005577";
-static char titleselbordercolor[] = "#005577";
-static char titleselfloatcolor[] = "#005577";
+static char tagsselfgcolor[] = "#eeeeee"; 
+static char tagsselbgcolor[] = "#005577"; 
+static char tagsselbordercolor[] = "#005577"; 
+static char tagsselfloatcolor[] = "#005577"; 
 
-static char tagsnormfgcolor[] = "#bbbbbb";
-static char tagsnormbgcolor[] = "#222222";
-static char tagsnormbordercolor[] = "#444444";
-static char tagsnormfloatcolor[] = "#db8fd9";
+static char hidnormfgcolor[] = "#005577"; 
+static char hidselfgcolor[] = "#227799"; 
+static char hidnormbgcolor[] = "#222222"; 
+static char hidselbgcolor[] = "#222222"; 
 
-static char tagsselfgcolor[] = "#eeeeee";
-static char tagsselbgcolor[] = "#005577";
-static char tagsselbordercolor[] = "#005577";
-static char tagsselfloatcolor[] = "#005577";
+static char urgfgcolor[] = "#bbbbbb"; 
+static char urgbgcolor[] = "#222222"; 
+static char urgbordercolor[] = "#ff0000"; 
+static char urgfloatcolor[] = "#db8fd9"; 
 
-static char hidnormfgcolor[] = "#005577";
-static char hidselfgcolor[] = "#227799";
-static char hidnormbgcolor[] = "#222222";
-static char hidselbgcolor[] = "#222222";
-
-static char urgfgcolor[] = "#bbbbbb";
-static char urgbgcolor[] = "#222222";
-static char urgbordercolor[] = "#ff0000";
-static char urgfloatcolor[] = "#db8fd9";
+xrdb(NULL);
 
 static char *colors[][ColCount] = {
-    /*                       fg                bg                border                float */
+    /*                       fg                bg             border                float */
     //{"#ff0000", "ffffff", "$00008F"},
-    [SchemeNorm] = {normfgcolor, normbgcolor, normbordercolor, normfloatcolor},
-    [SchemeSel] = {selfgcolor, selbgcolor, selbordercolor, selfloatcolor},
-    [SchemeTitleNorm] = {titlenormfgcolor, titlenormbgcolor, titlenormbordercolor, titlenormfloatcolor},
-    [SchemeTitleSel] = {titleselfgcolor, titleselbgcolor, titleselbordercolor, titleselfloatcolor},
-    [SchemeTagsNorm] = {tagsnormfgcolor, tagsnormbgcolor, tagsnormbordercolor, tagsnormfloatcolor},
-    [SchemeTagsSel] = {tagsselfgcolor, tagsselbgcolor, tagsselbordercolor, tagsselfloatcolor},
+    [SchemeNorm] = {normfgcolor, normbgcolor, selbgcolor, normfloatcolor},
+    [SchemeSel] = {normfgcolor, selbgcolor, selbordercolor, selfloatcolor},
+    [SchemeTitleNorm] = {normfgcolor, normbgcolor, normbordercolor, titlenormfloatcolor},
+    [SchemeTitleSel] = {normfgcolor, selbgcolor, selbordercolor, titleselfloatcolor},
+    [SchemeTagsNorm] = {selfgcolor, selfgcolor, normbordercolor, tagsnormfloatcolor},
+    [SchemeTagsSel] = {selfgcolor, selfgcolor, selbordercolor, tagsselfloatcolor},
     [SchemeHidNorm] = {hidnormfgcolor, hidnormbgcolor, c000000, c000000},
     [SchemeHidSel] = {hidselfgcolor, hidselbgcolor, c000000, c000000},
     [SchemeUrg] = {urgfgcolor, urgbgcolor, urgbordercolor, urgfloatcolor},
@@ -160,22 +150,17 @@ static char *colors[][ColCount] = {
 
 static const char *layoutmenu_cmd = "layoutmenu.sh";
 
-
-
 static const char *const autostart[] = {
     // "st", NULL,
     /* "brave", NULL, */
     NULL /* terminate */
 };
 
-
-
-const char *spcmd1[] = {"alacritty", "--class", "spterm", NULL};
+const char *spcmd1[] = {"st", "-n", "spterm", NULL};
 static Sp scratchpads[] = {
-    /* name          cmd  */
+    /* name          cmd */
     {"spterm", spcmd1},
 };
-
 
 /* Tags
  * In a traditional dwm the number of tags in use can be changed simply by changing the number
@@ -203,7 +188,7 @@ static Sp scratchpads[] = {
  * index. If the icon index is is greater than the number of tag icons then it will wrap around
  * until it an icon matches. Similarly if there are two tag icons then it would alternate between
  * them. This works seamlessly with alternative tags and alttagsdecoration patches.
- */
+*/ 
 static char *tagicons[][NUMTAGS] = {
     [DEFAULT_TAGS] = {"1", "2", "3", "4", "5", "6", "7", "8", "9"},
     [ALTERNATIVE_TAGS] = {"A", "B", "C", "D", "E", "F", "G", "H", "I"},
@@ -247,12 +232,14 @@ static const Rule rules[] = {
                                         RULE(.class = "discord", .tags = 1 << 1)
 
                                             RULE(.instance = "spterm", .tags = SPTAG(0), .isfloating = 1)
+                                            RULE(.instance = "flt", .isfloating = 1)
+                                            RULE(.instance = "btop", .isfloating = 1)
 
 };
 
 static const MonitorRule monrules[] = {
     /* monitor  layout  mfact  nmaster  showbar  topbar */
-    {1, 2, -1, -1, -1, -1}, // use a different layout for the second monitor
+    {1, 2, -1, -1, -1, -1},  // use a different layout for the second monitor
     {-1, 0, -1, -1, -1, -1}, // default
 };
 
@@ -269,29 +256,19 @@ static const MonitorRule monrules[] = {
  *    name - does nothing, intended for visual clue and for logging / debugging
  */
 static const BarRule barrules[] = {
-/* monitor   bar    alignment         widthfunc                drawfunc                clickfunc                name */
+    /* monitor   bar    alignment         widthfunc                drawfunc                clickfunc                name */
 
     {-1, 0, BAR_ALIGN_LEFT, width_stbutton, draw_stbutton, click_stbutton, "statusbutton"},
 
-
     {0, 0, BAR_ALIGN_LEFT, width_pwrl_tags, draw_pwrl_tags, click_pwrl_tags, "powerline_tags"},
 
-//#if BAR_TAGS_PATCH
-//    {-1, 0, BAR_ALIGN_LEFT, width_tags, draw_tags, click_tags, "tags"},
-//#endif // BAR_TAGS_PATCH
-
-
-
+    //#if BAR_TAGS_PATCH
+    //    {-1, 0, BAR_ALIGN_LEFT, width_tags, draw_tags, click_tags, "tags"},
+    //#endif // BAR_TAGS_PATCH
 
     {0, 0, BAR_ALIGN_RIGHT, width_systray, draw_systray, click_systray, "systray"},
 
-
     {-1, 0, BAR_ALIGN_LEFT, width_ltsymbol, draw_ltsymbol, click_ltsymbol, "layout"},
-
-
-
-
-
 
     {statusmon, 0, BAR_ALIGN_RIGHT, width_status2d, draw_status2d, click_statuscmd, "status2d"},
 
@@ -301,7 +278,7 @@ static const BarRule barrules[] = {
 
 /* layout(s) */
 static const float mfact = 0.60; /* factor of master area size [0.05..0.95] */
-static const int nmaster = 1; /* number of clients in master area */
+static const int nmaster = 1;    /* number of clients in master area */
 
 static const int nstack = 0; /* number of clients in primary stack area */
 
@@ -311,50 +288,40 @@ static const int decorhints = 1; /* 1 means respect decoration hints */
 
 static const Layout layouts[] = {
     /* symbol     arrange function, { nmaster, nstack, layout, master axis, stack axis, secondary stack axis, symbol func } */
-    {"[]=", flextile, {-1, -1, SPLIT_VERTICAL, TOP_TO_BOTTOM, TOP_TO_BOTTOM, 0, NULL}}, // default tile layout
-    {"><>", NULL, {0}}, /* no layout function means floating behavior */
-    {"[M]", flextile, {-1, -1, NO_SPLIT, MONOCLE, MONOCLE, 0, NULL}}, // monocle
-    {"|||", flextile, {-1, -1, SPLIT_VERTICAL, LEFT_TO_RIGHT, TOP_TO_BOTTOM, 0, NULL}}, // columns (col) layout
-    {">M>", flextile, {-1, -1, FLOATING_MASTER, LEFT_TO_RIGHT, LEFT_TO_RIGHT, 0, NULL}}, // floating master
-    {"[D]", flextile, {-1, -1, SPLIT_VERTICAL, TOP_TO_BOTTOM, MONOCLE, 0, NULL}}, // deck
-    {"TTT", flextile, {-1, -1, SPLIT_HORIZONTAL, LEFT_TO_RIGHT, LEFT_TO_RIGHT, 0, NULL}}, // bstack
-    {"===", flextile, {-1, -1, SPLIT_HORIZONTAL, LEFT_TO_RIGHT, TOP_TO_BOTTOM, 0, NULL}}, // bstackhoriz
-    {"|M|", flextile, {-1, -1, SPLIT_CENTERED_VERTICAL, LEFT_TO_RIGHT, TOP_TO_BOTTOM, TOP_TO_BOTTOM, NULL}}, // centeredmaster
+    {"[]=", flextile, {-1, -1, SPLIT_VERTICAL, TOP_TO_BOTTOM, TOP_TO_BOTTOM, 0, NULL}},                        // default tile layout
+    {"><>", NULL, {0}},                                                                                        /* no layout function means floating behavior */
+    {"[M]", flextile, {-1, -1, NO_SPLIT, MONOCLE, MONOCLE, 0, NULL}},                                          // monocle
+    {"|||", flextile, {-1, -1, SPLIT_VERTICAL, LEFT_TO_RIGHT, TOP_TO_BOTTOM, 0, NULL}},                        // columns (col) layout
+    {">M>", flextile, {-1, -1, FLOATING_MASTER, LEFT_TO_RIGHT, LEFT_TO_RIGHT, 0, NULL}},                       // floating master
+    {"[D]", flextile, {-1, -1, SPLIT_VERTICAL, TOP_TO_BOTTOM, MONOCLE, 0, NULL}},                              // deck
+    {"TTT", flextile, {-1, -1, SPLIT_HORIZONTAL, LEFT_TO_RIGHT, LEFT_TO_RIGHT, 0, NULL}},                      // bstack
+    {"===", flextile, {-1, -1, SPLIT_HORIZONTAL, LEFT_TO_RIGHT, TOP_TO_BOTTOM, 0, NULL}},                      // bstackhoriz
+    {"|M|", flextile, {-1, -1, SPLIT_CENTERED_VERTICAL, LEFT_TO_RIGHT, TOP_TO_BOTTOM, TOP_TO_BOTTOM, NULL}},   // centeredmaster
     {"-M-", flextile, {-1, -1, SPLIT_CENTERED_HORIZONTAL, TOP_TO_BOTTOM, LEFT_TO_RIGHT, LEFT_TO_RIGHT, NULL}}, // centeredmaster horiz
-    {":::", flextile, {-1, -1, NO_SPLIT, GAPPLESSGRID, GAPPLESSGRID, 0, NULL}}, // gappless grid
-    {"[\\]", flextile, {-1, -1, NO_SPLIT, DWINDLE, DWINDLE, 0, NULL}}, // fibonacci dwindle
-    {"(@)", flextile, {-1, -1, NO_SPLIT, SPIRAL, SPIRAL, 0, NULL}}, // fibonacci spiral
-    {"[T]", flextile, {-1, -1, SPLIT_VERTICAL, LEFT_TO_RIGHT, TATAMI, 0, NULL}}, // tatami mats
+    {":::", flextile, {-1, -1, NO_SPLIT, GAPPLESSGRID, GAPPLESSGRID, 0, NULL}},                                // gappless grid
+    {"[\\]", flextile, {-1, -1, NO_SPLIT, DWINDLE, DWINDLE, 0, NULL}},                                         // fibonacci dwindle
+    {"(@)", flextile, {-1, -1, NO_SPLIT, SPIRAL, SPIRAL, 0, NULL}},                                            // fibonacci spiral
+    {"[T]", flextile, {-1, -1, SPLIT_VERTICAL, LEFT_TO_RIGHT, TATAMI, 0, NULL}},                               // tatami mats
 
     {"[]=", tile, {0}},
 
-
     {"[M]", monocle, {0}},
-
 
     {"TTT", bstack, {0}},
 
-
     {"===", bstackhoriz, {0}},
-
 
     {"|M|", centeredmaster, {0}},
 
-
     {">M>", centeredfloatingmaster, {0}},
-
 
     {"|||", col, {0}},
 
-
     {"[D]", deck, {0}},
-
 
     {"(@)", spiral, {0}},
 
-
     {"[\\]", dwindle, {0}},
-
 
     {"HHH", grid, {0}},
 
@@ -365,10 +332,6 @@ static const Layout layouts[] = {
 /* key definitions */
 
 /* helper for spawning shell commands in the pre dwm-5.0 fashion */
-
-
-
-
 
 /* commands */
 
@@ -384,237 +347,218 @@ static const char *dmenucmd[] = {
     "-sb", selbgcolor,
     "-sf", selfgcolor,
 
-
-
     NULL};
-static const char *termcmd[] = {"kitty", NULL};
-
-
-
-
-
+static const char *termcmd[] = {"st", NULL};
 
 /* commands spawned when clicking statusbar, the mouse button pressed is exported as BUTTON */
-static const StatusCmd statuscmds[] = {
-    {"notify-send Volume$BUTTON", 1},
-    {"notify-send CPU$BUTTON", 2},
-    {"notify-send Battery$BUTTON", 3},
-};
 /* test the above with: xsetroot -name "$(printf '\x01Volume |\x02 CPU |\x03 Battery')" */
 static const char *statuscmd[] = {"", NULL};
 
-
-
-
 static const char *firefoxcmd[] = {"brave", NULL};
 static const char *slockcmd[] = {"slock", NULL};
-static const char *symcmd[] = {"/bin/sh","-c", "~/.local/bin/symbols", NULL};
+static const char *symcmd[] = {"symbols", NULL};
+static const char *volupcmd[] = {"vol", "+5%", NULL};
+static const char *voldowncmd[] = {"vol", "-5%", NULL};
+static const char *dmenuemoji[] = {"dmenuemoji", NULL};
+static const char *sigdwmblocks[] = {"signaldwmblocks", NULL};
 static Key on_empty_keys[] = {
     /* modifier key            function                argument */
     {0, XK_f, spawn, {.v = firefoxcmd}},
-    {0, XK_d, spawn, {.v = {"discord", NULL}}}
-};
-
+    {0, XK_d, spawn, {.v = {"discord", NULL}}}};
 
 static Key keys[] = {
     /* modifier                     key            function                argument */
-    {Mod1Mask | ShiftMask, XK_l, spawn, {.v = slockcmd}},
-    {Mod1Mask, XK_u, spawn, {.v = symcmd}},
+    {0, XF86XK_AudioRaiseVolume, spawn, SPWN(volupcmd)},
+    {0, XF86XK_AudioLowerVolume, spawn, SPWN(voldowncmd)},
+    
+    {Mod4Mask | ShiftMask, XK_l, spawn, {.v = slockcmd}},
+    {Mod4Mask, XK_u, spawn, SPWN(dmenuemoji)},
+    {Mod4Mask | ShiftMask, XK_u, spawn, SPWN(symcmd)},
 
+    {Mod4Mask, XK_p, spawn, {.v = dmenucmd}},
+    {Mod4Mask | ShiftMask, XK_Return, spawn, {.v = termcmd}},
 
+    {Mod4Mask, XK_b, togglebar, {0}},
+    {Mod4Mask | ShiftMask, XK_b, spawn, SPWN(sigdwmblocks)},
 
-    {Mod1Mask, XK_p, spawn, {.v = dmenucmd}},
-    {Mod1Mask | ShiftMask, XK_Return, spawn, {.v = termcmd}},
+    {Mod4Mask | ShiftMask, XK_F5, xrdb, {.v = NULL}},
 
+    {Mod4Mask, XK_j, focusstack, {.i = +1}},
+    {Mod4Mask, XK_k, focusstack, {.i = -1}},
 
+    {Mod4Mask, XK_i, incnmaster, {.i = +1}},
+    {Mod4Mask, XK_d, incnmaster, {.i = -1}},
 
+    {Mod4Mask | ControlMask, XK_i, incnstack, {.i = +1}},
+    {Mod4Mask | ControlMask, XK_u, incnstack, {.i = -1}},
 
-
-    {Mod1Mask, XK_b, togglebar, {0}},
-
-    {Mod1Mask, XK_j, focusstack, {.i = +1}},
-    {Mod1Mask, XK_k, focusstack, {.i = -1}},
-
-    {Mod1Mask, XK_i, incnmaster, {.i = +1}},
-    {Mod1Mask, XK_d, incnmaster, {.i = -1}},
-
-    {Mod1Mask | ControlMask, XK_i, incnstack, {.i = +1}},
-    {Mod1Mask | ControlMask, XK_u, incnstack, {.i = -1}},
-
-    {Mod1Mask, XK_h, setmfact, {.f = -0.05}},
-    {Mod1Mask, XK_l, setmfact, {.f = +0.05}},
-
-
-
-
-
-
-    {Mod1Mask | ControlMask | ShiftMask, XK_e, aspectresize, {.i = +24}},
-    {Mod1Mask | ControlMask | ShiftMask, XK_r, aspectresize, {.i = -24}},
-
-    {Mod1Mask, XK_x, transfer, {0}},
-
-    {Mod1Mask, XK_Return, zoom, {0}},
-
-    {Mod1Mask, XK_Tab, view, {0}},
-
-    {Mod1Mask | ShiftMask, XK_c, killclient, {0}},
-
-    {Mod1Mask | ShiftMask, XK_x, killunsel, {0}},
-
-
-    {Mod1Mask | ShiftMask, XK_r, self_restart, {0}},
-
-    {Mod1Mask | ShiftMask, XK_q, quit, {0}},
-
-    {Mod1Mask | ControlMask | ShiftMask, XK_q, quit, {1}},
-
-    {Mod1Mask, XK_t, setlayout, {.v = &layouts[0]}},
-    {Mod1Mask, XK_f, setlayout, {.v = &layouts[1]}},
-    {Mod1Mask, XK_m, setlayout, {.v = &layouts[2]}},
-
-    {Mod1Mask, XK_c, setlayout, {.v = &layouts[3]}},
-
-
-    {Mod1Mask | ControlMask, XK_t, rotatelayoutaxis, {.i = +1}}, /* flextile, 1 = layout axis */
-    {Mod1Mask | ControlMask, XK_Tab, rotatelayoutaxis, {.i = +2}}, /* flextile, 2 = master axis */
-    {Mod1Mask | ControlMask | ShiftMask, XK_Tab, rotatelayoutaxis, {.i = +3}}, /* flextile, 3 = stack axis */
-    {Mod1Mask | ControlMask | Mod1Mask, XK_Tab, rotatelayoutaxis, {.i = +4}}, /* flextile, 4 = secondary stack axis */
-    {Mod1Mask | Mod5Mask, XK_t, rotatelayoutaxis, {.i = -1}}, /* flextile, 1 = layout axis */
-    {Mod1Mask | Mod5Mask, XK_Tab, rotatelayoutaxis, {.i = -2}}, /* flextile, 2 = master axis */
-    {Mod1Mask | Mod5Mask | ShiftMask, XK_Tab, rotatelayoutaxis, {.i = -3}}, /* flextile, 3 = stack axis */
-    {Mod1Mask | Mod5Mask | Mod1Mask, XK_Tab, rotatelayoutaxis, {.i = -4}}, /* flextile, 4 = secondary stack axis */
-    {Mod1Mask | ControlMask, XK_Return, mirrorlayout, {0}}, /* flextile, flip master and stack areas */
-
-    {Mod1Mask, XK_space, setlayout, {0}},
-    {Mod1Mask | ShiftMask, XK_space, togglefloating, {0}},
-
-    {Mod1Mask | ControlMask | ShiftMask, XK_h, togglehorizontalmax, {0}},
-    {Mod1Mask | ControlMask | ShiftMask, XK_l, togglehorizontalmax, {0}},
-    {Mod1Mask | ControlMask | ShiftMask, XK_j, toggleverticalmax, {0}},
-    {Mod1Mask | ControlMask | ShiftMask, XK_k, toggleverticalmax, {0}},
-    {Mod1Mask | ControlMask, XK_m, togglemax, {0}},
-
-
-
-
-
-    {Mod1Mask, XK_grave, togglescratch, {.ui = 0}},
-    {Mod1Mask | ControlMask, XK_grave, setscratch, {.ui = 0}},
-    {Mod1Mask | ShiftMask, XK_grave, removescratch, {.ui = 0}},
-
-
-
-
-
-
-    {Mod1Mask, XK_y, togglefullscreen, {0}},
-
-
-    {Mod1Mask | ShiftMask, XK_y, togglefakefullscreen, {0}},
-
-
-    {Mod1Mask | ShiftMask, XK_f, fullscreen, {0}},
-
-
-    {Mod1Mask | ShiftMask, XK_s, togglesticky, {0}},
-
-
-
-
-
-
-    {Mod1Mask, XK_0, view, {.ui = ~SPTAGMASK}},
-    {Mod1Mask | ShiftMask, XK_0, tag, {.ui = ~SPTAGMASK}},
-
-
-
-
-    {Mod1Mask, XK_comma, focusmon, {.i = -1}},
-    {Mod1Mask, XK_period, focusmon, {.i = +1}},
-    {Mod1Mask | ShiftMask, XK_comma, tagmon, {.i = -1}},
-    {Mod1Mask | ShiftMask, XK_period, tagmon, {.i = +1}},
-
-    {Mod1Mask, XK_Left, viewtoleft, {0}}, // note keybinding conflict with focusdir
-    {Mod1Mask, XK_Right, viewtoright, {0}}, // note keybinding conflict with focusdir
-    {Mod1Mask | ShiftMask, XK_Left, tagtoleft, {0}},
-    {Mod1Mask | ShiftMask, XK_Right, tagtoright, {0}},
-    {Mod1Mask | ControlMask, XK_Left, tagandviewtoleft, {0}},
-    {Mod1Mask | ControlMask, XK_Right, tagandviewtoright, {0}},
-
-
-    {Mod1Mask | ShiftMask, XK_F1, tagall, {.v = "F1"}},
-    {Mod1Mask | ShiftMask, XK_F2, tagall, {.v = "F2"}},
-    {Mod1Mask | ShiftMask, XK_F3, tagall, {.v = "F3"}},
-    {Mod1Mask | ShiftMask, XK_F4, tagall, {.v = "F4"}},
-    {Mod1Mask | ShiftMask, XK_F5, tagall, {.v = "F5"}},
-    {Mod1Mask | ShiftMask, XK_F6, tagall, {.v = "F6"}},
-    {Mod1Mask | ShiftMask, XK_F7, tagall, {.v = "F7"}},
-    {Mod1Mask | ShiftMask, XK_F8, tagall, {.v = "F8"}},
-    {Mod1Mask | ShiftMask, XK_F9, tagall, {.v = "F9"}},
-    {Mod1Mask | ControlMask, XK_F1, tagall, {.v = "1"}},
-    {Mod1Mask | ControlMask, XK_F2, tagall, {.v = "2"}},
-    {Mod1Mask | ControlMask, XK_F3, tagall, {.v = "3"}},
-    {Mod1Mask | ControlMask, XK_F4, tagall, {.v = "4"}},
-    {Mod1Mask | ControlMask, XK_F5, tagall, {.v = "5"}},
-    {Mod1Mask | ControlMask, XK_F6, tagall, {.v = "6"}},
-    {Mod1Mask | ControlMask, XK_F7, tagall, {.v = "7"}},
-    {Mod1Mask | ControlMask, XK_F8, tagall, {.v = "8"}},
-    {Mod1Mask | ControlMask, XK_F9, tagall, {.v = "9"}},
-
-    {Mod1Mask, XK_KP_7, explace, {.ui = EX_NW}}, /* XK_KP_Home,  */
-    {Mod1Mask, XK_KP_8, explace, {.ui = EX_N}}, /* XK_KP_Up,    */
-    {Mod1Mask, XK_KP_9, explace, {.ui = EX_NE}}, /* XK_KP_Prior, */
-    {Mod1Mask, XK_KP_4, explace, {.ui = EX_W}}, /* XK_KP_Left,  */
-    {Mod1Mask, XK_KP_5, explace, {.ui = EX_C}}, /* XK_KP_Begin, */
-    {Mod1Mask, XK_KP_6, explace, {.ui = EX_E}}, /* XK_KP_Right, */
-    {Mod1Mask, XK_KP_1, explace, {.ui = EX_SW}}, /* XK_KP_End,   */
-    {Mod1Mask, XK_KP_2, explace, {.ui = EX_S}}, /* XK_KP_Down,  */
-    {Mod1Mask, XK_KP_3, explace, {.ui = EX_SE}}, /* XK_KP_Next,  */
-
-    {Mod1Mask | ShiftMask, XK_KP_8, exresize, {.v = (int[]){0, 25}}}, /* XK_KP_Up,    */
-    {Mod1Mask | ShiftMask, XK_KP_2, exresize, {.v = (int[]){0, -25}}}, /* XK_KP_Down,  */
-    {Mod1Mask | ShiftMask, XK_KP_6, exresize, {.v = (int[]){25, 0}}}, /* XK_KP_Right, */
-    {Mod1Mask | ShiftMask, XK_KP_4, exresize, {.v = (int[]){-25, 0}}}, /* XK_KP_Left,  */
-    {Mod1Mask | ShiftMask, XK_KP_5, exresize, {.v = (int[]){25, 25}}}, /* XK_KP_Begin, */
-    {Mod1Mask | ShiftMask | ControlMask, XK_KP_5, exresize, {.v = (int[]){-25, -25}}}, /* XK_KP_Begin, */
-
-    {Mod1Mask | ControlMask, XK_KP_6, togglehorizontalexpand, {.i = +1}}, /* XK_KP_Right, */
-    {Mod1Mask | ControlMask, XK_KP_3, togglehorizontalexpand, {.i = 0}}, /* XK_KP_Next,  */
-    {Mod1Mask | ControlMask, XK_KP_4, togglehorizontalexpand, {.i = -1}}, /* XK_KP_Left,  */
-    {Mod1Mask | ControlMask, XK_KP_8, toggleverticalexpand, {.i = +1}}, /* XK_KP_Up,    */
-    {Mod1Mask | ControlMask, XK_KP_1, toggleverticalexpand, {.i = 0}}, /* XK_KP_End,   */
-    {Mod1Mask | ControlMask, XK_KP_2, toggleverticalexpand, {.i = -1}}, /* XK_KP_Down,  */
-    {Mod1Mask | ControlMask, XK_KP_9, togglemaximize, {.i = -1}}, /* XK_KP_Prior, */
-    {Mod1Mask | ControlMask, XK_KP_7, togglemaximize, {.i = +1}}, /* XK_KP_Home,  */
-    {Mod1Mask | ControlMask, XK_KP_5, togglemaximize, {.i = 0}}, /* XK_KP_Begin, */
-
-    {Mod1Mask | ControlMask, XK_comma, cyclelayout, {.i = -1}},
-    {Mod1Mask | ControlMask, XK_period, cyclelayout, {.i = +1}},
-
-
-
-
-
-
-    {Mod1Mask, XK_1, view, {.ui = 1 << 0}}, {Mod1Mask | ControlMask, XK_1, toggleview, {.ui = 1 << 0}}, {Mod1Mask | ShiftMask, XK_1, tag, {.ui = 1 << 0}}, {Mod1Mask | ControlMask | ShiftMask, XK_1, toggletag, {.ui = 1 << 0}},
-        {Mod1Mask, XK_2, view, {.ui = 1 << 1}}, {Mod1Mask | ControlMask, XK_2, toggleview, {.ui = 1 << 1}}, {Mod1Mask | ShiftMask, XK_2, tag, {.ui = 1 << 1}}, {Mod1Mask | ControlMask | ShiftMask, XK_2, toggletag, {.ui = 1 << 1}},
-            {Mod1Mask, XK_3, view, {.ui = 1 << 2}}, {Mod1Mask | ControlMask, XK_3, toggleview, {.ui = 1 << 2}}, {Mod1Mask | ShiftMask, XK_3, tag, {.ui = 1 << 2}}, {Mod1Mask | ControlMask | ShiftMask, XK_3, toggletag, {.ui = 1 << 2}},
-                {Mod1Mask, XK_4, view, {.ui = 1 << 3}}, {Mod1Mask | ControlMask, XK_4, toggleview, {.ui = 1 << 3}}, {Mod1Mask | ShiftMask, XK_4, tag, {.ui = 1 << 3}}, {Mod1Mask | ControlMask | ShiftMask, XK_4, toggletag, {.ui = 1 << 3}},
-                    {Mod1Mask, XK_5, view, {.ui = 1 << 4}}, {Mod1Mask | ControlMask, XK_5, toggleview, {.ui = 1 << 4}}, {Mod1Mask | ShiftMask, XK_5, tag, {.ui = 1 << 4}}, {Mod1Mask | ControlMask | ShiftMask, XK_5, toggletag, {.ui = 1 << 4}},
-                        {Mod1Mask, XK_6, view, {.ui = 1 << 5}}, {Mod1Mask | ControlMask, XK_6, toggleview, {.ui = 1 << 5}}, {Mod1Mask | ShiftMask, XK_6, tag, {.ui = 1 << 5}}, {Mod1Mask | ControlMask | ShiftMask, XK_6, toggletag, {.ui = 1 << 5}},
-                            {Mod1Mask, XK_7, view, {.ui = 1 << 6}}, {Mod1Mask | ControlMask, XK_7, toggleview, {.ui = 1 << 6}}, {Mod1Mask | ShiftMask, XK_7, tag, {.ui = 1 << 6}}, {Mod1Mask | ControlMask | ShiftMask, XK_7, toggletag, {.ui = 1 << 6}},
-                                {Mod1Mask, XK_8, view, {.ui = 1 << 7}}, {Mod1Mask | ControlMask, XK_8, toggleview, {.ui = 1 << 7}}, {Mod1Mask | ShiftMask, XK_8, tag, {.ui = 1 << 7}}, {Mod1Mask | ControlMask | ShiftMask, XK_8, toggletag, {.ui = 1 << 7}},
-                                    {Mod1Mask, XK_9, view, {.ui = 1 << 8}}, {Mod1Mask | ControlMask, XK_9, toggleview, {.ui = 1 << 8}}, {Mod1Mask | ShiftMask, XK_9, tag, {.ui = 1 << 8}}, {Mod1Mask | ControlMask | ShiftMask, XK_9, toggletag, {.ui = 1 << 8}},};
+    {Mod4Mask, XK_h, setmfact, {.f = -0.05}},
+    {Mod4Mask, XK_l, setmfact, {.f = +0.05}},
+
+    {Mod4Mask | ControlMask | ShiftMask, XK_e, aspectresize, {.i = +24}},
+    {Mod4Mask | ControlMask | ShiftMask, XK_r, aspectresize, {.i = -24}},
+
+    {Mod4Mask, XK_x, transfer, {0}},
+
+    {Mod4Mask, XK_Return, zoom, {0}},
+
+    {Mod4Mask, XK_Tab, view, {0}},
+
+    {Mod4Mask | ShiftMask, XK_c, killclient, {0}},
+
+    {Mod4Mask | ShiftMask, XK_x, killunsel, {0}},
+
+    {Mod4Mask | ShiftMask, XK_r, self_restart, {0}},
+
+    {Mod4Mask | ShiftMask, XK_q, quit, {0}},
+
+    {Mod4Mask | ControlMask | ShiftMask, XK_q, quit, {1}},
+
+    {Mod4Mask, XK_t, setlayout, {.v = &layouts[0]}},
+    {Mod4Mask, XK_f, setlayout, {.v = &layouts[1]}},
+    {Mod4Mask, XK_m, setlayout, {.v = &layouts[2]}},
+
+    {Mod4Mask, XK_c, setlayout, {.v = &layouts[3]}},
+
+    {Mod4Mask | ControlMask, XK_t, rotatelayoutaxis, {.i = +1}},               /* flextile, 1 = layout axis */
+    {Mod4Mask | ControlMask, XK_Tab, rotatelayoutaxis, {.i = +2}},             /* flextile, 2 = master axis */
+    {Mod4Mask | ControlMask | ShiftMask, XK_Tab, rotatelayoutaxis, {.i = +3}}, /* flextile, 3 = stack axis */
+    {Mod4Mask | ControlMask | Mod4Mask, XK_Tab, rotatelayoutaxis, {.i = +4}},  /* flextile, 4 = secondary stack axis */
+    {Mod4Mask | Mod5Mask, XK_t, rotatelayoutaxis, {.i = -1}},                  /* flextile, 1 = layout axis */
+    {Mod4Mask | Mod5Mask, XK_Tab, rotatelayoutaxis, {.i = -2}},                /* flextile, 2 = master axis */
+    {Mod4Mask | Mod5Mask | ShiftMask, XK_Tab, rotatelayoutaxis, {.i = -3}},    /* flextile, 3 = stack axis */
+    {Mod4Mask | Mod5Mask | Mod4Mask, XK_Tab, rotatelayoutaxis, {.i = -4}},     /* flextile, 4 = secondary stack axis */
+    {Mod4Mask | ControlMask, XK_Return, mirrorlayout, {0}},                    /* flextile, flip master and stack areas */
+
+    {Mod4Mask, XK_space, setlayout, {0}},
+    {Mod4Mask | ShiftMask, XK_space, togglefloating, {0}},
+
+    {Mod4Mask | ControlMask | ShiftMask, XK_h, togglehorizontalmax, {0}},
+    {Mod4Mask | ControlMask | ShiftMask, XK_l, togglehorizontalmax, {0}},
+    {Mod4Mask | ControlMask | ShiftMask, XK_j, toggleverticalmax, {0}},
+    {Mod4Mask | ControlMask | ShiftMask, XK_k, toggleverticalmax, {0}},
+    {Mod4Mask | ControlMask, XK_m, togglemax, {0}},
+
+    {Mod4Mask, XK_grave, togglescratch, {.ui = 0}},
+    {Mod4Mask | ControlMask, XK_grave, setscratch, {.ui = 0}},
+    {Mod4Mask | ShiftMask, XK_grave, removescratch, {.ui = 0}},
+
+    {Mod4Mask, XK_y, togglefullscreen, {0}},
+
+    {Mod4Mask | ShiftMask, XK_y, togglefakefullscreen, {0}},
+
+    {Mod4Mask | ShiftMask, XK_f, fullscreen, {0}},
+
+    {Mod4Mask | ShiftMask, XK_s, togglesticky, {0}},
+
+    {Mod4Mask, XK_0, view, {.ui = ~SPTAGMASK}},
+    {Mod4Mask | ShiftMask, XK_0, tag, {.ui = ~SPTAGMASK}},
+
+    {Mod4Mask, XK_comma, focusmon, {.i = -1}},
+    {Mod4Mask, XK_period, focusmon, {.i = +1}},
+    {Mod4Mask | ShiftMask, XK_comma, tagmon, {.i = -1}},
+    {Mod4Mask | ShiftMask, XK_period, tagmon, {.i = +1}},
+
+    {Mod4Mask, XK_Left, viewtoleft, {0}},   // note keybinding conflict with focusdir
+    {Mod4Mask, XK_Right, viewtoright, {0}}, // note keybinding conflict with focusdir
+    {Mod4Mask | ShiftMask, XK_Left, tagtoleft, {0}},
+    {Mod4Mask | ShiftMask, XK_Right, tagtoright, {0}},
+    {Mod4Mask | ControlMask, XK_Left, tagandviewtoleft, {0}},
+    {Mod4Mask | ControlMask, XK_Right, tagandviewtoright, {0}},
+
+    {Mod4Mask | ShiftMask, XK_F1, tagall, {.v = "F1"}},
+    {Mod4Mask | ShiftMask, XK_F2, tagall, {.v = "F2"}},
+    {Mod4Mask | ShiftMask, XK_F3, tagall, {.v = "F3"}},
+    {Mod4Mask | ShiftMask, XK_F4, tagall, {.v = "F4"}},
+    {Mod4Mask | ShiftMask, XK_F5, tagall, {.v = "F5"}},
+    {Mod4Mask | ShiftMask, XK_F6, tagall, {.v = "F6"}},
+    {Mod4Mask | ShiftMask, XK_F7, tagall, {.v = "F7"}},
+    {Mod4Mask | ShiftMask, XK_F8, tagall, {.v = "F8"}},
+    {Mod4Mask | ShiftMask, XK_F9, tagall, {.v = "F9"}},
+    {Mod4Mask | ControlMask, XK_F1, tagall, {.v = "1"}},
+    {Mod4Mask | ControlMask, XK_F2, tagall, {.v = "2"}},
+    {Mod4Mask | ControlMask, XK_F3, tagall, {.v = "3"}},
+    {Mod4Mask | ControlMask, XK_F4, tagall, {.v = "4"}},
+    {Mod4Mask | ControlMask, XK_F5, tagall, {.v = "5"}},
+    {Mod4Mask | ControlMask, XK_F6, tagall, {.v = "6"}},
+    {Mod4Mask | ControlMask, XK_F7, tagall, {.v = "7"}},
+    {Mod4Mask | ControlMask, XK_F8, tagall, {.v = "8"}},
+    {Mod4Mask | ControlMask, XK_F9, tagall, {.v = "9"}},
+
+    {Mod4Mask, XK_KP_7, explace, {.ui = EX_NW}}, /* XK_KP_Home,  */
+    {Mod4Mask, XK_KP_8, explace, {.ui = EX_N}},  /* XK_KP_Up,    */
+    {Mod4Mask, XK_KP_9, explace, {.ui = EX_NE}}, /* XK_KP_Prior, */
+    {Mod4Mask, XK_KP_4, explace, {.ui = EX_W}},  /* XK_KP_Left,  */
+    {Mod4Mask, XK_KP_5, explace, {.ui = EX_C}},  /* XK_KP_Begin, */
+    {Mod4Mask, XK_KP_6, explace, {.ui = EX_E}},  /* XK_KP_Right, */
+    {Mod4Mask, XK_KP_1, explace, {.ui = EX_SW}}, /* XK_KP_End,   */
+    {Mod4Mask, XK_KP_2, explace, {.ui = EX_S}},  /* XK_KP_Down,  */
+    {Mod4Mask, XK_KP_3, explace, {.ui = EX_SE}}, /* XK_KP_Next,  */
+
+    {Mod4Mask | ShiftMask, XK_KP_8, exresize, {.v = (int[]){0, 25}}},                  /* XK_KP_Up,    */
+    {Mod4Mask | ShiftMask, XK_KP_2, exresize, {.v = (int[]){0, -25}}},                 /* XK_KP_Down,  */
+    {Mod4Mask | ShiftMask, XK_KP_6, exresize, {.v = (int[]){25, 0}}},                  /* XK_KP_Right, */
+    {Mod4Mask | ShiftMask, XK_KP_4, exresize, {.v = (int[]){-25, 0}}},                 /* XK_KP_Left,  */
+    {Mod4Mask | ShiftMask, XK_KP_5, exresize, {.v = (int[]){25, 25}}},                 /* XK_KP_Begin, */
+    {Mod4Mask | ShiftMask | ControlMask, XK_KP_5, exresize, {.v = (int[]){-25, -25}}}, /* XK_KP_Begin, */
+
+    {Mod4Mask | ControlMask, XK_KP_6, togglehorizontalexpand, {.i = +1}}, /* XK_KP_Right, */
+    {Mod4Mask | ControlMask, XK_KP_3, togglehorizontalexpand, {.i = 0}},  /* XK_KP_Next,  */
+    {Mod4Mask | ControlMask, XK_KP_4, togglehorizontalexpand, {.i = -1}}, /* XK_KP_Left,  */
+    {Mod4Mask | ControlMask, XK_KP_8, toggleverticalexpand, {.i = +1}},   /* XK_KP_Up,    */
+    {Mod4Mask | ControlMask, XK_KP_1, toggleverticalexpand, {.i = 0}},    /* XK_KP_End,   */
+    {Mod4Mask | ControlMask, XK_KP_2, toggleverticalexpand, {.i = -1}},   /* XK_KP_Down,  */
+    {Mod4Mask | ControlMask, XK_KP_9, togglemaximize, {.i = -1}},         /* XK_KP_Prior, */
+    {Mod4Mask | ControlMask, XK_KP_7, togglemaximize, {.i = +1}},         /* XK_KP_Home,  */
+    {Mod4Mask | ControlMask, XK_KP_5, togglemaximize, {.i = 0}},          /* XK_KP_Begin, */
+
+    {Mod4Mask | ControlMask, XK_comma, cyclelayout, {.i = -1}},
+    {Mod4Mask | ControlMask, XK_period, cyclelayout, {.i = +1}},
+
+    {Mod4Mask, XK_1, view, {.ui = 1 << 0}},
+    {Mod4Mask | ControlMask, XK_1, toggleview, {.ui = 1 << 0}},
+    {Mod4Mask | ShiftMask, XK_1, tag, {.ui = 1 << 0}},
+    {Mod4Mask | ControlMask | ShiftMask, XK_1, toggletag, {.ui = 1 << 0}},
+    {Mod4Mask, XK_2, view, {.ui = 1 << 1}},
+    {Mod4Mask | ControlMask, XK_2, toggleview, {.ui = 1 << 1}},
+    {Mod4Mask | ShiftMask, XK_2, tag, {.ui = 1 << 1}},
+    {Mod4Mask | ControlMask | ShiftMask, XK_2, toggletag, {.ui = 1 << 1}},
+    {Mod4Mask, XK_3, view, {.ui = 1 << 2}},
+    {Mod4Mask | ControlMask, XK_3, toggleview, {.ui = 1 << 2}},
+    {Mod4Mask | ShiftMask, XK_3, tag, {.ui = 1 << 2}},
+    {Mod4Mask | ControlMask | ShiftMask, XK_3, toggletag, {.ui = 1 << 2}},
+    {Mod4Mask, XK_4, view, {.ui = 1 << 3}},
+    {Mod4Mask | ControlMask, XK_4, toggleview, {.ui = 1 << 3}},
+    {Mod4Mask | ShiftMask, XK_4, tag, {.ui = 1 << 3}},
+    {Mod4Mask | ControlMask | ShiftMask, XK_4, toggletag, {.ui = 1 << 3}},
+    {Mod4Mask, XK_5, view, {.ui = 1 << 4}},
+    {Mod4Mask | ControlMask, XK_5, toggleview, {.ui = 1 << 4}},
+    {Mod4Mask | ShiftMask, XK_5, tag, {.ui = 1 << 4}},
+    {Mod4Mask | ControlMask | ShiftMask, XK_5, toggletag, {.ui = 1 << 4}},
+    {Mod4Mask, XK_6, view, {.ui = 1 << 5}},
+    {Mod4Mask | ControlMask, XK_6, toggleview, {.ui = 1 << 5}},
+    {Mod4Mask | ShiftMask, XK_6, tag, {.ui = 1 << 5}},
+    {Mod4Mask | ControlMask | ShiftMask, XK_6, toggletag, {.ui = 1 << 5}},
+    {Mod4Mask, XK_7, view, {.ui = 1 << 6}},
+    {Mod4Mask | ControlMask, XK_7, toggleview, {.ui = 1 << 6}},
+    {Mod4Mask | ShiftMask, XK_7, tag, {.ui = 1 << 6}},
+    {Mod4Mask | ControlMask | ShiftMask, XK_7, toggletag, {.ui = 1 << 6}},
+    {Mod4Mask, XK_8, view, {.ui = 1 << 7}},
+    {Mod4Mask | ControlMask, XK_8, toggleview, {.ui = 1 << 7}},
+    {Mod4Mask | ShiftMask, XK_8, tag, {.ui = 1 << 7}},
+    {Mod4Mask | ControlMask | ShiftMask, XK_8, toggletag, {.ui = 1 << 7}},
+    {Mod4Mask, XK_9, view, {.ui = 1 << 8}},
+    {Mod4Mask | ControlMask, XK_9, toggleview, {.ui = 1 << 8}},
+    {Mod4Mask | ShiftMask, XK_9, tag, {.ui = 1 << 8}},
+    {Mod4Mask | ControlMask | ShiftMask, XK_9, toggletag, {.ui = 1 << 8}},
+};
 
 /* button definitions */
-
-
 
 /* click can be ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle, ClkClientWin, or ClkRootWin */
 
 static Button buttons[] = {
-/* click                event mask           button          function        argument */
+    /* click                event mask           button          function        argument */
 
     {ClkButton, 0, Button1, spawn, {.v = dmenucmd}},
 
@@ -622,38 +566,29 @@ static Button buttons[] = {
 
     {ClkLtSymbol, 0, Button3, layoutmenu, {0}},
 
-
-
-
-
-
-
     {ClkWinTitle, 0, Button2, zoom, {0}},
 
+    /* {ClkStatusText, 0, Button1, spawn, {.v = statuscmd}}, */
+    /* {ClkStatusText, 0, Button2, spawn, {.v = statuscmd}}, */
+    /* {ClkStatusText, 0, Button3, spawn, {.v = statuscmd}}, */
 
+    {ClkClientWin, Mod4Mask, Button1, movemouse, {0}},
 
+    {ClkClientWin, Mod4Mask, Button2, togglefloating, {0}},
+    {ClkClientWin, Mod4Mask, Button3, resizemouse, {0}},
 
-
-    {ClkStatusText, 0, Button1, spawn, {.v = statuscmd}},
-    {ClkStatusText, 0, Button2, spawn, {.v = statuscmd}},
-    {ClkStatusText, 0, Button3, spawn, {.v = statuscmd}},
-
-    {ClkClientWin, Mod1Mask, Button1, movemouse, {0}},
-
-    {ClkClientWin, Mod1Mask, Button2, togglefloating, {0}},
-    {ClkClientWin, Mod1Mask, Button3, resizemouse, {0}},
-
-    {ClkClientWin, Mod1Mask | ShiftMask, Button1, dragmfact, {0}},
+    {ClkClientWin, Mod4Mask | ShiftMask, Button1, dragmfact, {0}},
 
     {ClkTagBar, 0, Button1, view, {0}},
     {ClkTagBar, 0, Button3, toggleview, {0}},
-    {ClkTagBar, Mod1Mask, Button1, tag, {0}},
-    {ClkTagBar, Mod1Mask, Button3, toggletag, {0}},
-
-
+    {ClkTagBar, Mod4Mask, Button1, tag, {0}},
+    {ClkTagBar, Mod4Mask, Button3, toggletag, {0}},
+    {ClkStatusText, 0, Button1, sigstatusbar, {.i = 1}},
+    {ClkStatusText, 0, Button2, sigstatusbar, {.i = 2}},
+    {ClkStatusText, 0, Button3, sigstatusbar, {.i = 3}},
+    {ClkStatusText, ShiftMask, Button3, sigstatusbar, {.i = 4}},
 
 };
-
 
 /* signal definitions */
 /* signum must be greater than 0 */
@@ -666,12 +601,6 @@ static Signal signals[] = {
     {"incnmaster", incnmaster},
     {"togglefloating", togglefloating},
     {"focusmon", focusmon},
-
-
-
-
-
-
 
     {"viewtoleft", viewtoleft},
     {"viewtoright", viewtoright},
@@ -690,14 +619,7 @@ static Signal signals[] = {
     {"toggleverticalexpand", toggleverticalexpand},
     {"togglemaximize", togglemaximize},
 
-
-
-
-
     {"transfer", transfer},
-
-
-
 
     {"tagmon", tagmon},
     {"zoom", zoom},
@@ -707,29 +629,11 @@ static Signal signals[] = {
     {"viewex", viewex},
     {"toggleview", toggleview},
 
-
-
-
-
-
-
     {"self_restart", self_restart},
-
-
-
-
 
     {"togglesticky", togglesticky},
 
-
-
-
-
     {"cyclelayout", cyclelayout},
-
-
-
-
 
     {"toggleviewex", toggleviewex},
     {"tag", tag},
@@ -740,26 +644,20 @@ static Signal signals[] = {
 
     {"togglefullscreen", togglefullscreen},
 
-
     {"togglefakefullscreen", togglefakefullscreen},
 
-
     {"fullscreen", fullscreen},
-
 
     {"togglehorizontalmax", togglehorizontalmax},
     {"toggleverticalmax", toggleverticalmax},
     {"togglemax", togglemax},
 
-
     {"togglescratch", togglescratch},
-
-
-
 
     {"killclient", killclient},
 
     {"quit", quit},
     {"setlayout", setlayout},
     {"setlayoutex", setlayoutex},
+    {"xrdb", xrdb},
 };
